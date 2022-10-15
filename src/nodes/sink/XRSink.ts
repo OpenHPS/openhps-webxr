@@ -14,7 +14,7 @@ export class XRSink<In extends XRDataFrame> extends SinkNode<In> {
 
     private _onBuild(): Promise<void> {
         return new Promise((resolve, reject) => {
-            this._service = this.model.findService<WebXRService>("WebXRService");
+            this._service = this.model.findService<WebXRService>(WebXRService);
             if (this._service === undefined || this._service === null) {
                 return reject(new Error(`WebXR service was not added to model!`));
             }

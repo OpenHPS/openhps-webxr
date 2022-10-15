@@ -8,4 +8,5 @@ export class XRDataFrame extends DataFrame {
     rawFrame: XRFrame;
     @SerializableMember()
     targetPose: Float32Array;
+    rawCamera?: WebGLTexture;
 }

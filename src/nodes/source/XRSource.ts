@@ -1,4 +1,5 @@
-import { SourceNode, CameraObject, Absolute3DPosition, SourceNodeOptions } from "@openhps/core";
+import { SourceNode, Absolute3DPosition, SourceNodeOptions, LengthUnit } from "@openhps/core";
+import { CameraObject } from "@openhps/video";
 import { XRDataFrame } from "../../data/XRDataFrame";
 import { WebXRService } from "../../service/WebXRService";
 
@@ -23,9 +24,7 @@ export class XRSource extends SourceNode<XRDataFrame> {
 
             // Request local reference spaces at the time this session was created
             this._service.session.requestReferenceSpace('local').then((refSpace: XRReferenceSpace) => {
-                this.logger('debug', {
-                    message: "Local reference space created. Starting animation frames ..."
-                });
+                this.logger('debug', "Local reference space created. Starting animation frames ...");
                 this._refSpace = refSpace;
 
                 this._service.session.requestAnimationFrame(this._onXRFrame.bind(this));
@@ -44,8 +43,21 @@ export class XRSource extends SourceNode<XRDataFrame> {
 
     private _onXRFrame(time: number, frame: XRFrame): void {
         const pose: XRViewerPose = frame.getViewerPose(this._refSpace);
-
+        const gl = this._service.gl;
+        
         if (pose) {
+            // Get camera view
+            for (const view of pose.views) {
+                const session = this._service.session;
+                const baseLayer = session.renderState.baseLayer;
+                const viewport = baseLayer.getViewport(view);
+                gl.viewport(viewport.x, viewport.y,
+                            viewport.width, viewport.height);
+                const depthData = frame.getDepthInformation(view);
+                const image = this._service.glBinding.getCameraImage(view.camera);
+                console.log(image);
+            }
+
             this._service.gl.bindFramebuffer(this._service.gl.FRAMEBUFFER, frame.session.renderState.baseLayer.framebuffer);
             
             const matrix: Float32Array = pose.transform.matrix;
@@ -54,7 +66,9 @@ export class XRSource extends SourceNode<XRDataFrame> {
             // Set DOMPoint position to camera source
             const position: Absolute3DPosition = new Absolute3DPosition(xrPosition.x, xrPosition.y, xrPosition.z);
             // TODO: Handle accuracy based on the emulated position
-            position.accuracy = pose.emulatedPosition ? 100 : 0;
+            if (pose.emulatedPosition) {
+                position.setAccuracy(100, LengthUnit.CENTIMETER);
+            }
             this.source.position = position;
 
             // Create XR Data Frame

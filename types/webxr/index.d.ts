@@ -110,6 +110,7 @@ interface XRFrame {
     session: XRSession;
     getViewerPose(referenceSpace: XRReferenceSpace): XRViewerPose | undefined;
     getPose(space: XRSpace, baseSpace: XRSpace): XRPose | undefined;
+    getDepthInformation(view: XRView): any;
 
     // AR
     getHitTestResults(hitTestSource: XRHitTestSource): Array<XRHitTestResult> ;
@@ -152,6 +153,23 @@ interface XRWebGLLayer {
     getViewport: Function;
 }
 
+declare class XRWebGLBinding {
+    readonly nativeProjectionScaleFactor: number;
+
+    constructor(session: XRSession, context: WebGLRenderingContext);
+
+    createProjectionLayer(init?: XRProjectionLayerInit): XRProjectionLayer;
+    createQuadLayer(init?: XRQuadLayerInit): XRQuadLayer;
+    createCylinderLayer(init?: XRCylinderLayerInit): XRCylinderLayer;
+    createEquirectLayer(init?: XREquirectLayerInit): XREquirectLayer;
+    createCubeLayer(init?: XRCubeLayerInit): XRCubeLayer;
+
+    getSubImage(layer: XRCompositionLayer, frame: XRFrame, eye?: XREye): XRWebGLSubImage;
+    getViewSubImage(layer: XRProjectionLayer, view: XRView): XRWebGLSubImage;
+
+    getCameraImage(camera: XRCamera): WebGLTexture;
+}
+
 declare class XRRigidTransform {
     constructor(matrix: Float32Array | DOMPointInit, direction?: DOMPointInit);
     position: DOMPointReadOnly;
@@ -160,10 +178,15 @@ declare class XRRigidTransform {
     inverse: XRRigidTransform;
 }
 
+interface XRCamera {
+    width: number;
+    height: number;
+}
 interface XRView {
     eye: XREye;
     projectionMatrix: Float32Array;
     transform: XRRigidTransform;
+    camera?: XRCamera;
 }
 
 interface XRInputSourceChangeEvent {

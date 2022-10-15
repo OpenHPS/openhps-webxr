@@ -3,12 +3,13 @@ import { Service } from "@openhps/core";
 export class WebXRService extends Service {
     private _session: XRSession = null;
     protected options: WebXRServiceOptions;
-
+    glBinding: XRWebGLBinding;
+    
     constructor(options?: WebXRServiceOptions) {
         super();
         this.options = options || {};
         this.options.autoStart = this.options.autoStart || true;
-        this.options.requiredFeatures = this.options.requiredFeatures || ["local", "hit-test"];
+        this.options.requiredFeatures = this.options.requiredFeatures || ["local", "hit-test", "camera-access", "depth-sensing"];
 
         if (!this.options.gl) {
             const canvas = document.createElement("canvas");
@@ -26,8 +27,15 @@ export class WebXRService extends Service {
             if (!(navigator as any).xr) {
                 return reject(new Error("WebXR is not supported!"));
             }
-            (navigator as any).xr.requestSession("immersive-ar", { requiredFeatures: this.options.requiredFeatures }).then((session: XRSession) => {
+            (navigator as any).xr.requestSession("immersive-ar", {
+                requiredFeatures: this.options.requiredFeatures,
+                depthSensing: {
+                    usagePreference: [ "cpu-optimized"],
+                    dataFormatPreference: ["luminance-alpha"]
+                }
+            }).then((session: XRSession) => {
                 this._session = session;
+                this.glBinding = new XRWebGLBinding(session, this.gl);
                 this._session.updateRenderState({
                     baseLayer: new XRWebGLLayer(this._session, this.gl)
                 });
@@ -43,7 +51,6 @@ export class WebXRService extends Service {
     get gl(): WebGLRenderingContext {
         return this.options.gl;
     }
-
 }
 
 export interface WebXRServiceOptions {
