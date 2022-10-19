@@ -110,7 +110,7 @@ interface XRFrame {
     session: XRSession;
     getViewerPose(referenceSpace: XRReferenceSpace): XRViewerPose | undefined;
     getPose(space: XRSpace, baseSpace: XRSpace): XRPose | undefined;
-    getDepthInformation(view: XRView): any;
+    getDepthInformation(view: XRView): XRCPUDepthInformation;
 
     // AR
     getHitTestResults(hitTestSource: XRHitTestSource): Array<XRHitTestResult> ;
@@ -220,6 +220,13 @@ interface XRHitResult {
 interface XRTransientInputHitTestResult {
     readonly inputSource: XRInputSource;
     readonly results: Array<XRHitTestResult>;
+}
+
+interface XRCPUDepthInformation {
+    data: ArrayBuffer;
+    rawValueToMeters: number;
+    width: number;
+    height: number;
 }
 
 interface XRHitTestResult {

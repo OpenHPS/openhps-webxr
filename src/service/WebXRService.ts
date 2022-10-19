@@ -9,7 +9,7 @@ export class WebXRService extends Service {
         super();
         this.options = options || {};
         this.options.autoStart = this.options.autoStart || true;
-        this.options.requiredFeatures = this.options.requiredFeatures || ["local", "hit-test", "camera-access", "depth-sensing"];
+        this.options.requiredFeatures = this.options.requiredFeatures || ["local", "hit-test", "camera-access", "depth-sensing", "dom-overlay"];
 
         if (!this.options.gl) {
             const canvas = document.createElement("canvas");
@@ -30,9 +30,10 @@ export class WebXRService extends Service {
             (navigator as any).xr.requestSession("immersive-ar", {
                 requiredFeatures: this.options.requiredFeatures,
                 depthSensing: {
-                    usagePreference: [ "cpu-optimized"],
-                    dataFormatPreference: ["luminance-alpha"]
-                }
+                    usagePreference: [ "cpu-optimized", "gpu-optimized"],
+                    dataFormatPreference: ["luminance-alpha", "float32"]
+                },
+                domOverlay: { root: document.body }
             }).then((session: XRSession) => {
                 this._session = session;
                 this.glBinding = new XRWebGLBinding(session, this.gl);

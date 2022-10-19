@@ -6,13 +6,17 @@ import { WebXRService } from "../../service/WebXRService";
 export class XRSource extends SourceNode<XRDataFrame> {
     private _refSpace: XRReferenceSpace = null;
     private _service: WebXRService = null;
-
+    
     constructor(options?: SourceNodeOptions) {
         super(options);
         this.options.source = this.options.source || new CameraObject(this.uid);
 
         this.on('build', this._initReferenceSpace.bind(this));
         this.once('destroy', this._onDestroy.bind(this));
+    }
+
+    protected get source(): CameraObject {
+        return super.source as CameraObject;
     }
 
     private _initReferenceSpace(): Promise<void> {
@@ -46,6 +50,9 @@ export class XRSource extends SourceNode<XRDataFrame> {
         const gl = this._service.gl;
         
         if (pose) {
+            // Create XR Data Frame
+            const dataFrame = new XRDataFrame(); 
+
             // Get camera view
             for (const view of pose.views) {
                 const session = this._service.session;
@@ -55,7 +62,7 @@ export class XRSource extends SourceNode<XRDataFrame> {
                             viewport.width, viewport.height);
                 const depthData = frame.getDepthInformation(view);
                 const image = this._service.glBinding.getCameraImage(view.camera);
-                console.log(image);
+                dataFrame.depth = depthData;
             }
 
             this._service.gl.bindFramebuffer(this._service.gl.FRAMEBUFFER, frame.session.renderState.baseLayer.framebuffer);
@@ -71,14 +78,12 @@ export class XRSource extends SourceNode<XRDataFrame> {
             }
             this.source.position = position;
 
-            // Create XR Data Frame
-            const dataFrame = new XRDataFrame(); 
             dataFrame.createdTimestamp = time; // Creation timestamp based on the XR frame
             dataFrame.viewerPose = matrix;
             dataFrame.rawFrame = frame;
             dataFrame.source = this.source;
             dataFrame.refSpace = this._refSpace;
-
+            
             this.push(dataFrame).then(() => {
                 frame.session.requestAnimationFrame(this._onXRFrame.bind(this));
             });
